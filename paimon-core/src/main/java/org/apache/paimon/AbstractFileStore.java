@@ -25,6 +25,7 @@ import org.apache.paimon.manifest.ManifestFile;
 import org.apache.paimon.manifest.ManifestList;
 import org.apache.paimon.operation.FileStoreCommitImpl;
 import org.apache.paimon.operation.FileStoreExpireImpl;
+import org.apache.paimon.operation.FileStoreWrite;
 import org.apache.paimon.operation.PartitionExpire;
 import org.apache.paimon.operation.SnapshotDeletion;
 import org.apache.paimon.options.MemorySize;
@@ -52,7 +53,7 @@ public abstract class AbstractFileStore<T> implements FileStore<T> {
     protected final CoreOptions options;
     protected final RowType partitionType;
 
-    @Nullable private final SegmentsCache<String> writeManifestCache;
+    @Nullable protected final SegmentsCache<String> writeManifestCache;
 
     public AbstractFileStore(
             FileIO fileIO,
@@ -122,6 +123,11 @@ public abstract class AbstractFileStore<T> implements FileStore<T> {
     @Override
     public CoreOptions options() {
         return options;
+    }
+
+    @Override
+    public FileStoreWrite<T> newWrite(String commitUser) {
+        return newWrite(commitUser, null);
     }
 
     @Override

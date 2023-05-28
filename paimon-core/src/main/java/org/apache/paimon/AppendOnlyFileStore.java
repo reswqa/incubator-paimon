@@ -66,11 +66,6 @@ public class AppendOnlyFileStore extends AbstractFileStore<InternalRow> {
     }
 
     @Override
-    public AppendOnlyFileStoreWrite newWrite(String commitUser) {
-        return newWrite(commitUser, null);
-    }
-
-    @Override
     public AppendOnlyFileStoreWrite newWrite(
             String commitUser, ManifestCacheFilter manifestFilter) {
         return new AppendOnlyFileStoreWrite(

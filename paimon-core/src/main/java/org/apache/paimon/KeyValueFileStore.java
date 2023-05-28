@@ -108,7 +108,9 @@ public class KeyValueFileStore extends AbstractFileStore<KeyValue> {
                 mfFactory,
                 pathFactory(),
                 snapshotManager(),
-                newScan(true).withManifestCacheFilter(manifestFilter),
+                writeManifestCache == null
+                        ? newScan(true)
+                        : newScan(true).withManifestCacheFilter(manifestFilter),
                 options,
                 keyValueFieldsExtractor);
     }
