@@ -19,6 +19,7 @@
 package org.apache.paimon.flink;
 
 import org.apache.paimon.CoreOptions;
+import org.apache.paimon.CoreOptions.MergeEngine;
 import org.apache.paimon.WriteMode;
 import org.apache.paimon.flink.sink.FlinkTableSink;
 import org.apache.paimon.flink.util.AbstractTestBase;
@@ -1570,6 +1571,67 @@ public class ReadWriteTableITCase extends AbstractTestBase {
         // Step4: execute update statement
         assertThatThrownBy(() -> bEnv.executeSql(updateStatement).await())
                 .satisfies(AssertionUtils.anyCauseMatches(UnsupportedOperationException.class));
+    }
+
+    @Test
+    public void testUpdatePartialColumn() throws Exception {
+        Set<CoreOptions.MergeEngine> supportUpdateEngines = new HashSet<>();
+        supportUpdateEngines.add(CoreOptions.MergeEngine.DEDUPLICATE);
+        supportUpdateEngines.add(CoreOptions.MergeEngine.PARTIAL_UPDATE);
+        // Step1: define table schema
+        Map<String, String> options = new HashMap<>();
+        options.put(WRITE_MODE.key(), WriteMode.CHANGE_LOG.toString());
+        options.put(MERGE_ENGINE.key(), MergeEngine.PARTIAL_UPDATE.toString());
+        String table =
+                createTable(
+                        Arrays.asList(
+                                "id BIGINT NOT NULL",
+                                "currency STRING",
+                                "rate BIGINT",
+                                "dt String"),
+                        Arrays.asList("id", "dt"),
+                        Collections.singletonList("dt"),
+                        options);
+
+        // Step2: batch write some historical data
+        insertInto(
+                table,
+                "(1, 'US Dollar', 114, '2022-01-01')",
+                "(2, 'UNKNOWN', 1, '2022-01-01')",
+                "(3, 'Euro', 114, '2022-01-01')",
+                "(3, 'Euro', 119, '2022-01-02')");
+
+        // Step3: prepare expected data.
+        // String rowKind = mergeEngine == CoreOptions.MergeEngine.PARTIAL_UPDATE ? "+I" : "+U";
+        String rowKind = "+I";
+        List<Row> expectedRecords =
+                Arrays.asList(
+                        // part = 2022-01-01
+                        changelogRow("+I", 1L, "US Dollar", 114L, "2022-01-01"),
+                        changelogRow(rowKind, 2L, "Yen", 1L, "2022-01-01"),
+                        changelogRow("+I", 3L, "Euro", 114L, "2022-01-01"),
+                        // part = 2022-01-02
+                        changelogRow("+I", 3L, "Euro", 119L, "2022-01-02"));
+
+        // Step4: prepare update statement
+        String updateStatement =
+                String.format(
+                        ""
+                                + "UPDATE %s "
+                                + "SET currency = 'Yen' "
+                                + "WHERE currency = 'UNKNOWN' and dt = '2022-01-01'",
+                        table);
+
+        // Step5: execute update statement and verify result
+        // if (supportUpdateEngines.contains(mergeEngine)) {
+        if (true) {
+            bEnv.executeSql(updateStatement).await();
+            String querySql = String.format("SELECT * FROM %s", table);
+            testBatchRead(querySql, expectedRecords);
+        } else {
+            assertThatThrownBy(() -> bEnv.executeSql(updateStatement).await())
+                    .satisfies(AssertionUtils.anyCauseMatches(UnsupportedOperationException.class));
+        }
     }
 
     // ----------------------------------------------------------------------------------------------------------------

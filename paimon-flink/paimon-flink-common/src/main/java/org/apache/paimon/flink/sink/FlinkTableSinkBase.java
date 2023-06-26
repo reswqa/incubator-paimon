@@ -55,7 +55,7 @@ public abstract class FlinkTableSinkBase
         implements DynamicTableSink, SupportsOverwrite, SupportsPartitioning {
 
     private final ObjectIdentifier tableIdentifier;
-    private final DynamicTableFactory.Context context;
+    protected final DynamicTableFactory.Context tableFactoryContext;
     @Nullable private final LogStoreTableFactory logStoreTableFactory;
 
     protected final Table table;
@@ -66,11 +66,11 @@ public abstract class FlinkTableSinkBase
     public FlinkTableSinkBase(
             ObjectIdentifier tableIdentifier,
             Table table,
-            DynamicTableFactory.Context context,
+            DynamicTableFactory.Context tableFactoryContext,
             @Nullable LogStoreTableFactory logStoreTableFactory) {
         this.tableIdentifier = tableIdentifier;
         this.table = table;
-        this.context = context;
+        this.tableFactoryContext = tableFactoryContext;
         this.logStoreTableFactory = logStoreTableFactory;
     }
 
@@ -120,7 +120,8 @@ public abstract class FlinkTableSinkBase
 
         LogSinkProvider logSinkProvider = null;
         if (logStoreTableFactory != null) {
-            logSinkProvider = logStoreTableFactory.createSinkProvider(this.context, context);
+            logSinkProvider =
+                    logStoreTableFactory.createSinkProvider(this.tableFactoryContext, context);
         }
 
         Options conf = Options.fromMap(table.options());
@@ -143,7 +144,8 @@ public abstract class FlinkTableSinkBase
     @Override
     public DynamicTableSink copy() {
         FlinkTableSink copied =
-                new FlinkTableSink(tableIdentifier, table, context, logStoreTableFactory);
+                new FlinkTableSink(
+                        tableIdentifier, table, tableFactoryContext, logStoreTableFactory);
         copied.staticPartitions = new HashMap<>(staticPartitions);
         copied.overwrite = overwrite;
         return copied;

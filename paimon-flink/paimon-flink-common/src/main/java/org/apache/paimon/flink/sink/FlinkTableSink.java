@@ -37,6 +37,7 @@ import javax.annotation.Nullable;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -78,15 +79,28 @@ public class FlinkTableSink extends FlinkTableSinkBase
                             throw new UnsupportedOperationException(errMsg);
                         }
                     });
-            if (options.get(MERGE_ENGINE) == MergeEngine.DEDUPLICATE
-                    || options.get(MERGE_ENGINE) == MergeEngine.PARTIAL_UPDATE) {
-                // Even with partial-update we still need all columns. Because the topology
-                // structure is source -> cal -> constraintEnforcer -> sink, in the
-                // constraintEnforcer operator, the constraint check will be performed according to
-                // the index, not according to the column. So we can't return only some columns,
-                // which will cause problems like ArrayIndexOutOfBoundsException.
-                // TODO: return partial columns after FLINK-32001 is resolved.
+            if (options.get(MERGE_ENGINE) == MergeEngine.DEDUPLICATE) {
+                // return all columns for deduplicate engine.
                 return new RowLevelUpdateInfo() {};
+            } else if (options.get(MERGE_ENGINE) == MergeEngine.PARTIAL_UPDATE) {
+                // only return partial columns for partial_update engine.
+                return new RowLevelUpdateInfo() {
+                    @Override
+                    public Optional<List<Column>> requiredColumns() {
+                        List<Column> primaryKeys =
+                                table.primaryKeys().stream()
+                                        .map(
+                                                pk ->
+                                                        tableFactoryContext
+                                                                .getCatalogTable()
+                                                                .getResolvedSchema()
+                                                                .getColumn(pk)
+                                                                .get())
+                                        .collect(Collectors.toList());
+                        primaryKeys.addAll(updatedColumns);
+                        return Optional.of(primaryKeys);
+                    }
+                };
             }
             throw new UnsupportedOperationException(
                     String.format(
