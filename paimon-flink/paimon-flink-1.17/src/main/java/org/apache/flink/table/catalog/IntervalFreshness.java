@@ -24,4 +24,12 @@ package org.apache.flink.table.catalog;
 public class IntervalFreshness {
     /** Dummy TimeUnit placeholder. */
     public enum TimeUnit {}
+
+    public String getInterval() {
+        return "dummy";
+    }
+
+    public TimeUnit getTimeUnit() {
+        return null;
+    }
 }
