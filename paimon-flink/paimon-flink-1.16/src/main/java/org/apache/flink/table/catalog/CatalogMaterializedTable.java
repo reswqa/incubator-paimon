@@ -16,9 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.flink;
-
-import org.apache.flink.table.catalog.CatalogBaseTable;
+package org.apache.flink.table.catalog;
 
 /**
  * Dummy placeholder to resolve compatibility issue of CatalogMaterializedTable(introduced in flink

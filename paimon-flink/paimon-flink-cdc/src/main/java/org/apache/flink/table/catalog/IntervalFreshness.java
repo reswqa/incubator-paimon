@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.flink;
+package org.apache.flink.table.catalog;
 
 /**
  * Dummy placeholder to resolve compatibility issue of IntervalFreshness(introduced in flink 1.20).
