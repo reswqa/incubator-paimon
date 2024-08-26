@@ -22,6 +22,10 @@ import org.apache.paimon.CoreOptions;
 import org.apache.paimon.catalog.Catalog;
 import org.apache.paimon.catalog.Identifier;
 import org.apache.paimon.data.BinaryRow;
+import org.apache.paimon.flink.FlinkConnectorOptions.CatalogTableType;
+import org.apache.paimon.flink.FlinkConnectorOptions.MaterializedTableIntervalFreshnessTimeUnit;
+import org.apache.paimon.flink.FlinkConnectorOptions.MaterializedTableRefreshMode;
+import org.apache.paimon.flink.FlinkConnectorOptions.MaterializedTableRefreshStatus;
 import org.apache.paimon.flink.procedure.ProcedureUtil;
 import org.apache.paimon.flink.utils.FlinkCatalogPropertiesUtil;
 import org.apache.paimon.fs.Path;
@@ -332,7 +336,7 @@ public class FlinkCatalog extends AbstractCatalog {
         if (table instanceof CatalogMaterializedTable) {
             CatalogMaterializedTable mt = (CatalogMaterializedTable) table;
             Options mtOptions = new Options();
-            mtOptions.set(CATALOG_TABLE_TYPE, CatalogBaseTable.TableKind.MATERIALIZED_TABLE);
+            mtOptions.set(CATALOG_TABLE_TYPE, CatalogTableType.MATERIALIZED_TABLE);
             mt.getSnapshot().ifPresent(x -> mtOptions.set(CATALOG_MATERIALIZED_TABLE_SNAPSHOT, x));
             mtOptions.set(CATALOG_MATERIALIZED_TABLE_DEFINITION_QUERY, mt.getDefinitionQuery());
             mtOptions.set(
@@ -340,17 +344,23 @@ public class FlinkCatalog extends AbstractCatalog {
                     mt.getDefinitionFreshness().getInterval());
             mtOptions.set(
                     CATALOG_MATERIALIZED_TABLE_INTERVAL_FRESHNESS_TIME_UNIT,
-                    mt.getDefinitionFreshness().getTimeUnit());
+                    MaterializedTableIntervalFreshnessTimeUnit.valueOf(
+                            mt.getDefinitionFreshness().getTimeUnit().name()));
             mtOptions.set(
-                    CATALOG_MATERIALIZED_TABLE_LOGICAL_REFRESH_MODE, mt.getLogicalRefreshMode());
-            mtOptions.set(CATALOG_MATERIALIZED_TABLE_REFRESH_MODE, mt.getRefreshMode());
-            mtOptions.set(CATALOG_MATERIALIZED_TABLE_REFRESH_STATUS, mt.getRefreshStatus());
+                    CATALOG_MATERIALIZED_TABLE_LOGICAL_REFRESH_MODE,
+                    MaterializedTableRefreshMode.valueOf(mt.getLogicalRefreshMode().name()));
+            mtOptions.set(
+                    CATALOG_MATERIALIZED_TABLE_REFRESH_MODE,
+                    MaterializedTableRefreshMode.valueOf(mt.getRefreshMode().name()));
+            mtOptions.set(
+                    CATALOG_MATERIALIZED_TABLE_REFRESH_STATUS,
+                    MaterializedTableRefreshStatus.valueOf(mt.getRefreshStatus().name()));
             mt.getRefreshHandlerDescription()
                     .ifPresent(
-                            x ->
+                            desc ->
                                     mtOptions.set(
                                             CATALOG_MATERIALIZED_TABLE_REFRESH_HANDLER_DESCRIPTION,
-                                            x));
+                                            desc));
             byte[] serializedRefreshHandler = mt.getSerializedRefreshHandler();
             if (serializedRefreshHandler != null) {
                 mtOptions.set(
@@ -873,13 +883,18 @@ public class FlinkCatalog extends AbstractCatalog {
         IntervalFreshness freshness =
                 IntervalFreshness.of(
                         options.get(CATALOG_MATERIALIZED_TABLE_INTERVAL_FRESHNESS),
-                        options.get(CATALOG_MATERIALIZED_TABLE_INTERVAL_FRESHNESS_TIME_UNIT));
+                        IntervalFreshness.TimeUnit.valueOf(
+                                options.get(CATALOG_MATERIALIZED_TABLE_INTERVAL_FRESHNESS_TIME_UNIT)
+                                        .name()));
         CatalogMaterializedTable.LogicalRefreshMode logicalRefreshMode =
-                options.get(CATALOG_MATERIALIZED_TABLE_LOGICAL_REFRESH_MODE);
+                CatalogMaterializedTable.LogicalRefreshMode.valueOf(
+                        options.get(CATALOG_MATERIALIZED_TABLE_LOGICAL_REFRESH_MODE).name());
         CatalogMaterializedTable.RefreshMode refreshMode =
-                options.get(CATALOG_MATERIALIZED_TABLE_REFRESH_MODE);
+                CatalogMaterializedTable.RefreshMode.valueOf(
+                        options.get(CATALOG_MATERIALIZED_TABLE_REFRESH_MODE).name());
         CatalogMaterializedTable.RefreshStatus refreshStatus =
-                options.get(CATALOG_MATERIALIZED_TABLE_REFRESH_STATUS);
+                CatalogMaterializedTable.RefreshStatus.valueOf(
+                        options.get(CATALOG_MATERIALIZED_TABLE_REFRESH_STATUS).name());
         String refreshHandlerDescription =
                 options.get(CATALOG_MATERIALIZED_TABLE_REFRESH_HANDLER_DESCRIPTION);
         byte[] serializedRefreshHandler =
