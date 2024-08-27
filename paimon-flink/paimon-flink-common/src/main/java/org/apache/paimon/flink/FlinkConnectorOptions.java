@@ -522,7 +522,7 @@ public class FlinkConnectorOptions {
 
     /** The refresh mode of materialized table. */
     public enum MaterializedTableRefreshMode {
-        /** The refresh pipeline will be executed in continuous mode */
+        /** The refresh pipeline will be executed in continuous mode. */
         CONTINUOUS,
 
         /** The refresh pipeline will be executed in full mode. */
