@@ -21,7 +21,6 @@ package org.apache.paimon.flink;
 import org.apache.paimon.CoreOptions;
 import org.apache.paimon.catalog.Catalog;
 import org.apache.paimon.catalog.Identifier;
-import org.apache.paimon.data.BinaryRow;
 import org.apache.paimon.flink.FlinkConnectorOptions.CatalogTableType;
 import org.apache.paimon.flink.FlinkConnectorOptions.MaterializedTableIntervalFreshnessTimeUnit;
 import org.apache.paimon.flink.FlinkConnectorOptions.MaterializedTableRefreshMode;
