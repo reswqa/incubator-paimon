@@ -19,9 +19,7 @@
 package org.apache.flink.table.catalog;
 
 /**
- * Dummy placeholder to resolve compatibility issue of IntervalFreshness(introduced in flink 1.20).
+ * Dummy placeholder to resolve compatibility issue of CatalogMaterializedTable(introduced in flink
+ * 1.20).
  */
-public class IntervalFreshness {
-    /** Dummy TimeUnit placeholder. */
-    public enum TimeUnit {}
-}
+public interface CatalogMaterializedTable extends CatalogBaseTable {}
