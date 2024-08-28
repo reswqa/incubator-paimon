@@ -22,4 +22,13 @@ package org.apache.flink.table.catalog;
  * Dummy placeholder to resolve compatibility issue of CatalogMaterializedTable(introduced in flink
  * 1.20).
  */
-public interface CatalogMaterializedTable extends CatalogBaseTable {}
+public interface CatalogMaterializedTable extends CatalogBaseTable {
+    /** Dummy LogicalRefreshMode placeholder. */
+    enum LogicalRefreshMode {}
+
+    /** Dummy RefreshMode placeholder. */
+    enum RefreshMode {}
+
+    /** Dummy RefreshStatus placeholder. */
+    enum RefreshStatus {}
+}
